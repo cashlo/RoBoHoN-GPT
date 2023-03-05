@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="dev.cashlo.robohongpt">
 
+    <uses-permission android:name="jp.co.sharp.android.permission.VOICEUI"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,12 +17,26 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RoBoHoNGPT"
         tools:targetApi="31">
+        <service
+            android:name=".voiceui.RegisterScenarioService"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+        <receiver android:name=".voiceui.RequestScenarioReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="jp.co.sharp.android.voiceui.REQUEST_SCENARIO"/>
+            </intent-filter>
+        </receiver>
+        <uses-library
+            android:name="jp.co.sharp.android.voiceui.framework"
+            android:required="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <category android:name="jp.co.sharp.android.rb.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<hvml version="2.0">
+    <head>
+        <producer>dev.cashlo.robohongpt</producer>
+        <description>言語別の発話をするシナリオ(日本語)</description>
+        <scene value="dev.cashlo.robohongpt.scene_common"/>
+        <version value="1.0"/>
+        <accost priority="75" topic_id="hello" word="dev.cashlo.robohongpt.accost.hello"/>
+    </head>
+    <body>
+        <topic id="hello" listen="false">
+            <action index="1">
+                <speech>こんにちは、ぼく、ロボホン</speech>
+                <behavior id="assign" type="normal"/>
+            </action>
+        </topic>
+    </body>
+</hvml>

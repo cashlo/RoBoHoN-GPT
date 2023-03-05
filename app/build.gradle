@@ -40,4 +40,17 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9'
+    implementation  'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1'
+
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    compileOnly files([
+            'libs/jp.co.sharp.android.voiceui.framework.jar',
+            'libs/jp.co.sharp.android.robot.framework.jar'])
+    implementation fileTree(dir: 'libs', include: ['**/*.jar'], excludes: [
+            '**/*-sources.jar',
+            '**/*-javadoc.jar',
+            'jp.co.sharp.android.voiceui.framework.jar',
+            'jp.co.sharp.android.robot.framework.jar'])
 }

@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<hvml version="2.0">
+    <head>
+        <producer>dev.cashlo.robohongpt</producer>
+        <description>サンプルアプリのホーム起動シナリオ(日本語)</description>
+        <scene value="home"/>
+        <version value="1.0"/>
+        <!--(ロボホン名)、App_name(を)起動(して)-->
+        <situation priority="78" topic_id="t1" trigger="user-word">${Local:WORD_APPLICATION} eq たげんごさんぷる</situation>
+        <situation priority="78" topic_id="t1" trigger="user-word">${Local:WORD_APPLICATION_FREEWORD} eq たげんごさんぷるしよう</situation>
+    </head>
+    <body>
+        <topic id="t1" listen="false">
+            <action index="1">
+                <speech>${resolver:speech_ok(${resolver:ok_id})}</speech>
+                <behavior id="${resolver:motion_ok(${resolver:ok_id})}" type="normal"/>
+            </action>
+            <next href="#t2" type="default"/>
+        </topic>
+        <topic id="t2" listen="false">
+            <action index="1">
+                <speech>サンプルアプリを起動するね</speech>
+                <behavior id="assign" type="normal"/>
+                <control function="start_activity" target="home">
+                    <data key="package_name" value="dev.cashlo.robohongpt"/>
+                    <data key="class_name" value="dev.cashlo.robohongpt.MainActivity"/>
+                </control>
+            </action>
+        </topic>
+    </body>
+</hvml>
