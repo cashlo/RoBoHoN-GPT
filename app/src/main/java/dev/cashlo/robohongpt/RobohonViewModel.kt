@@ -26,12 +26,12 @@ class RobohonViewModel: ViewModel()  {
     fun onRecognize(robohon: Robohon, speech: String, speechRecognizer: SpeechRecognizer) {
         viewModelScope.launch(Dispatchers.IO) {
             val response = ChatGptApiClient.getResponse(speech)
-            robohon.speak(Locale.ENGLISH, response.text, Emotion.valueOf(response.emotion, response.level), Behavior.ID_0x06001d_自分を指す)
+            robohon.speak(response.text, Emotion.valueOf(response.emotion, response.level), Behavior.ID_0x06001d_自分を指す)
             robohon.waitForSpeechToFinish()
 
             val speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_US")
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "yue_Hant_HK")
             //          speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
             CoroutineScope(Dispatchers.Main).launch {
                 speechRecognizer.startListening(speechRecognizerIntent)

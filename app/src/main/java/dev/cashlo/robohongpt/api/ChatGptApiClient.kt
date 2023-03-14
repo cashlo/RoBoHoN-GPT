@@ -1,6 +1,10 @@
 package dev.cashlo.robohongpt.api
+import android.util.Log
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.IOException
+import java.lang.Thread.sleep
 
 
 object ChatGptApiClient {
@@ -63,25 +67,36 @@ object ChatGptApiClient {
 
 
     fun getResponse(prompt: String): Speech {
-        messages_en.add(ChatGptRequest.Message("user", prompt))
-        val request = ChatGptRequest(MODEL, messages_en)
+        messages.add(ChatGptRequest.Message("user", prompt))
+        val request = ChatGptRequest(MODEL, messages)
 
-        try {
-            val response = apiService.getResponse(
-                request
-            ).execute()
+
+        var success = false
+        var waitTime = 100L
+        var response: Response<ChatGptResponse>? = null
+        while (!success) {
+            try {
+                response = apiService.getResponse(
+                    request
+                ).execute()
+            } catch (exception: IOException) {
+                exception.printStackTrace()
+                Log.d("getResponse()", "ChatGPT API call failed, retrying in $waitTime ms")
+                sleep(waitTime)
+                waitTime *= 2
+                continue
+            }
+            success = true
+        }
 
             val responseContent = response?.body()?.choices?.get(0)?.message?.content
-            messages_en.add(ChatGptRequest.Message("assistant", responseContent!!))
+            messages.add(ChatGptRequest.Message("assistant", responseContent!!))
             val splitContent = responseContent!!.split("|")
             return if (splitContent.size == 3) {
                 Speech(splitContent[0], splitContent[1], splitContent[2])
             } else {
                 Speech(responseContent, null, null)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
 
         return Speech("", null, null)
     }

@@ -1,7 +1,12 @@
 package dev.cashlo.robohongpt
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -10,11 +15,13 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
 import android.widget.Button
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import sbs.util.robohon.Robohon
-import sbs.util.robohon.RobohonCallback
 
 
 class MainActivity : AppCompatActivity() {
@@ -27,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     fun startListening() {
         val speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_US")
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "yue_Hant_HK")
         //          speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
         speechRecognizer!!.startListening(speechRecognizerIntent)
     }
@@ -40,6 +47,14 @@ class MainActivity : AppCompatActivity() {
         startButton!!.setOnClickListener() {
             startListening()
         }
+
+        //ホームボタンの検知登録.
+        val filterHome = IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
+        registerReceiver(object : BroadcastReceiver() {
+            override fun onReceive(contxt: Context?, intent: Intent?) {
+                    Log.d("onResults", "Receive Home button pressed")
+            }
+        }, filterHome)
     }
 
     private fun checkPermission() {
