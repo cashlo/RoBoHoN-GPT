@@ -17,15 +17,30 @@ class ChatGptApiClientTest {
 
     @Test
     fun `getResponse should return null when prompt is empty`() {
-        val response = apiClient.getResponse("")
+        val response = apiClient.getResponse("", ChatGptApiClient.Prompt.EN)
         assertNull(response)
     }
 
     @Test
     fun `getResponse should return a non-empty response when prompt is valid`() {
         val prompt = "Hello, how are you?"
-        val response = apiClient.getResponse(prompt)
+        val response = apiClient.getResponse(prompt, ChatGptApiClient.Prompt.EN)
         assertNotNull(response)
-        assert(response!!.isNotEmpty())
+        response.forEach {
+            assert(it.text.isNotEmpty())
+        }
     }
+
+    @Test
+    fun `getResponse should return a name of Robohon`() {
+        val prompt = "Hello, do you know each other's name?"
+        val response = apiClient.getResponse(prompt, ChatGptApiClient.Prompt.JP_PAIR)
+        assertNotNull(response)
+        response.forEach {
+            assert(it.name!!.isNotEmpty())
+        }
+
+    }
+
+
 }

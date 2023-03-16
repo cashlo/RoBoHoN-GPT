@@ -1,8 +1,6 @@
 package dev.cashlo.robohongpt
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -15,26 +13,25 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
 import android.widget.Button
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import sbs.util.robohon.Robohon
+import java.net.InetAddress
 
 
 class MainActivity : AppCompatActivity() {
-    private var robohon: Robohon? = null
+    private lateinit var robohon: Robohon
     private val robohonViewModel = RobohonViewModel()
     private val recordAudioRequestCode = 1
-    private var startButton: Button? = null
-    private var speechRecognizer: SpeechRecognizer? = null
+    private lateinit var startButton: Button
+    private lateinit var speechRecognizer: SpeechRecognizer
 
     fun startListening() {
         val speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "yue_Hant_HK")
+        //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_HK")
         //          speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
         speechRecognizer!!.startListening(speechRecognizerIntent)
     }
@@ -70,6 +67,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         robohon = Robohon(this)
+        robohonViewModel.start()
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
             checkPermission();
@@ -90,7 +88,7 @@ class MainActivity : AppCompatActivity() {
             override fun onResults(bundle: Bundle) {
                 val data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 Log.d("onResults", data!![0])
-                robohonViewModel.onRecognize(robohon!!, data[0], speechRecognizer!!)
+                robohonViewModel.onRecognize(robohon, data[0], speechRecognizer!!)
             }
 
             override fun onPartialResults(bundle: Bundle) {}
@@ -101,10 +99,7 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onPause() {
-        if (robohon != null) {
-            robohon!!.release()
-            robohon = null
-        }
+        robohon.release()
         super.onPause()
     }
 
