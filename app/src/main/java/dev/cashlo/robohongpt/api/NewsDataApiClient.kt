@@ -23,11 +23,12 @@ object NewsApiClient {
 
     private val apiService = retrofit.create(NewsDataApi::class.java)
 
-    fun getNews(country: String, language: String): List<NewsDataResponse.NewsArticle>? {
+    fun getNews(country: String?, language: String?, category: String?): List<NewsDataResponse.NewsArticle>? {
         val response = apiService.getNews(
             API_KEY,
             country,
-            language
+            language,
+            category
         ).execute()
 
         return response.body()!!.results

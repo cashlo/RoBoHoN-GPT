@@ -10,12 +10,9 @@ interface NewsDataApi {
         @Query("apiKey") apiKey: String,
         @Query("country") country: String? = null,
         @Query("language") language: String? = null,
+        @Query("category") category: String? = "top",
         @Query("q") query: String? = null,
         @Query("qInTitle") queryInTitle: String? = null,
-        @Query("category") category: String? = null,
-        @Query("domains") domain: String? = null,
-        @Query("pageSize") pageSize: Int? = null,
-        @Query("page") page: Int? = null,
-        @Query("sortBy") sortBy: String? = null
+        @Query("domain") domain: String? = "nytimes,bbc"
     ): Call<NewsDataResponse>
 }

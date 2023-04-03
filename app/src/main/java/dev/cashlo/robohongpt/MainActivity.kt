@@ -95,6 +95,7 @@ class MainActivity : AppCompatActivity() {
             override fun onEvent(i: Int, bundle: Bundle) {}
         })
         startListening()
+        robohonViewModel.startRadio(robohon)
     }
 
 
