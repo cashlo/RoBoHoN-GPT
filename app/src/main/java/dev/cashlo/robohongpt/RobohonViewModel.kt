@@ -14,14 +14,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.osdn.util.ssdp.Device
 import net.osdn.util.ssdp.client.SsdpClient
-import sbs.util.robohon.Behavior
 import sbs.util.robohon.Emotion
 import sbs.util.robohon.Robohon
 import java.util.*
 
 
 class RobohonViewModel : ViewModel() {
-    private lateinit  var remoteRobohon: sbs.util.robohon.remote.Robohon
+    private val remoteRobohon = mutableListOf<sbs.util.robohon.remote.Robohon>()
 
     fun start() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -41,11 +40,9 @@ class RobohonViewModel : ViewModel() {
                             "ModelDescription = " + device.getModelDescription().toString() + "\n"
                 )
                 if (device.modelName == "SR01MW"){
-                    remoteRobohon = sbs.util.robohon.remote.Robohon(device.getAddress())
+                    remoteRobohon.add(sbs.util.robohon.remote.Robohon(device.getAddress()))
                 }
-
             }
-
         }
     }
 
@@ -55,13 +52,12 @@ class RobohonViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             var prompt = "Let's do a radio news show\"Robohon News\"! Here's the topics we will cover:\n" +
                     newsOrder.joinToString() + "\n" +
-                    "Make sure to welcome listener to the show, and mention when you change topic:"
-            //"ラジオ番組をやりましょう！こちらはニュースです。各ニュース項目に教えてください, ついてユーモアを交えながら議論してください。\n"
+                    "There will be around 3 news items for each topics. Make sure to welcome listener to the show, and mention when you change topic:"
 
             newsOrder.forEach { category ->
-                val newsResponse = NewsApiClient.getNews(null, "en", category)
+                val newsResponse = NewsApiClient.getNews(null, "en", category, "google")
 
-                prompt += "here's the $category news items.\n" +
+                prompt += "here's the $category news items. Please remember to response in a single JSON\n" +
                         "for each news item, please give me a summary, and then do a discussion with humor and jokes.\n"
                 var newsCount = 0
                 newsResponse!!
@@ -80,8 +76,38 @@ class RobohonViewModel : ViewModel() {
             speakInPair("Thank the listeners for joining the show", robohon, Locale.ENGLISH)
 
                 //"ラジオ番組をやりましょう！こちらはニュースです。各ニュース項目に教えてください, ついてユーモアを交えながら議論してください。\n"
+        }
+    }
 
+    fun startRadioJp(robohon: Robohon) {
+        viewModelScope.launch(Dispatchers.IO) {
+            var prompt =  "ラジオニュースショー\"ロボホンニュース\"をやりましょう！こちらはトピックスです:\n" +
+                    newsOrder.joinToString() + "\n" +
+                    "トピックごとに約 3 つのニュース項目があります、リスナーを歓迎し、トピックが変わった際に言及するようにしてください:"
+            //"ラジオ番組をやりましょう！こちらはニュースです。各ニュース項目に教えてください, ついてユーモアを交えながら議論してください。\n"
 
+            newsOrder.forEach { category ->
+                val newsResponse = NewsApiClient.getNews(null, "jp", category, "yahoo_jp,google,nhk")
+
+                prompt += "$category ニュース項目はこちらです。単一の JSON で応答することを忘れないでください\n" +
+                        "各ニュース項目について、要約を教えてからユーモアとジョークを交えて議論してください。\n"
+                var newsCount = 0
+                newsResponse!!
+                    .take(3)
+                    .forEach {
+                        Log.d("RobohonViewModel", "$category news title: ${it.title}")
+                        prompt += it.title + "\n" +
+                                it.description + "\n"
+                        newsCount += 1
+                        if (newsCount % 3 == 0 || newsCount == newsResponse.size) {
+                            speakInPair(prompt, robohon, Locale.JAPANESE)
+                            prompt = ""
+                        }
+                    }
+            }
+            speakInPair("リスナーの皆さん、番組にご参加いただきありがとうございました", robohon, Locale.JAPANESE)
+
+            //"ラジオ番組をやりましょう！こちらはニュースです。各ニュース項目に教えてください, ついてユーモアを交えながら議論してください。\n"
         }
     }
 
@@ -110,21 +136,13 @@ class RobohonViewModel : ViewModel() {
     }
 
     private fun speakInPair(prompt: String, robohon: Robohon, locale: Locale) {
-        val response = ChatGptApiClient.getResponse(prompt, ChatGptPrompt.Prompt.EN_PAIR)
+        var promptType = ChatGptPrompt.Prompt.EN_PAIR
+        if (locale == Locale.JAPANESE) {
+            promptType = ChatGptPrompt.Prompt.JP_PAIR
+        }
+        val response = ChatGptApiClient.getResponse(prompt, promptType, remoteRobohon.size + 1)
         response!!.forEach {
-            if (it.name == "R2") {
-                Log.d("RobohonViewModel", "R2: ${it.text}")
-                if (::remoteRobohon.isInitialized) {
-                    remoteRobohon.speak(
-                        locale,
-                        it.text,
-                        sbs.util.robohon.remote.Emotion.valueOf(it.emotion, it.level),
-                        null,
-                        // sbs.util.robohon.remote.Behavior.ID_0x06001d_自分を指す
-                    )
-                }
-                remoteRobohon.waitForSpeechToFinish()
-            } else {
+            if (it.name == "R1") {
                 Log.d("RobohonViewModel", "R1: ${it.text}")
                 robohon.speak(
                     locale,
@@ -133,6 +151,19 @@ class RobohonViewModel : ViewModel() {
                     null,
                     // Behavior.ID_0x06001d_自分を指す
                 )
+            } else {
+                Log.d("RobohonViewModel", "${it.name}: ${it.text}")
+                val robohonIndex = it.name!![1].digitToInt() - 2
+                if (remoteRobohon.size > robohonIndex) {
+                    remoteRobohon[robohonIndex].speak(
+                        locale,
+                        it.text,
+                        sbs.util.robohon.remote.Emotion.valueOf(it.emotion, it.level),
+                        null,
+                        // sbs.util.robohon.remote.Behavior.ID_0x06001d_自分を指す
+                    )
+                    remoteRobohon[robohonIndex].waitForSpeechToFinish()
+                }
             }
             robohon.waitForSpeechToFinish()
         }

@@ -11,8 +11,8 @@ interface NewsDataApi {
         @Query("country") country: String? = null,
         @Query("language") language: String? = null,
         @Query("category") category: String? = "top",
+        @Query("domain") domain: String? = null,
         @Query("q") query: String? = null,
-        @Query("qInTitle") queryInTitle: String? = null,
-        @Query("domain") domain: String? = "nytimes,bbc"
+        @Query("qInTitle") queryInTitle: String? = null
     ): Call<NewsDataResponse>
 }

@@ -20,9 +20,9 @@ object ChatGptApiClient {
 
     private val retrofit by lazy {
         val okHttpClient = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
 
         Retrofit.Builder()
@@ -36,14 +36,14 @@ object ChatGptApiClient {
     val gson = Gson()
 
 
-    fun getResponse(userPrompt: String, systemPrompt: ChatGptPrompt.Prompt): List<Speech>? {
-        val messages = ChatGptPrompt.getPrompt(systemPrompt) ?: throw IllegalArgumentException("bad systemPrompt")
+    fun getResponse(userPrompt: String, systemPrompt: ChatGptPrompt.Prompt, numberOfAgents: Int): List<Speech>? {
+        val messages = ChatGptPrompt.getPrompt(systemPrompt, numberOfAgents) ?: throw IllegalArgumentException("bad systemPrompt")
         messages.add(ChatGptRequest.Message("user", userPrompt))
         val request = ChatGptRequest(MODEL, messages)
 
 
         var success = false
-        var waitTime = 100L
+        var waitTime = 1000L
         var response: Response<ChatGptResponse>? = null
         while (!success) {
             try {

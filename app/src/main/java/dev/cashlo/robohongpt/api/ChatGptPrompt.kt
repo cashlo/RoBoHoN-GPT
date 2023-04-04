@@ -64,27 +64,33 @@ class ChatGptPrompt {
         private val systemPromptEnPair by lazy {
             val systemMessage = ChatGptRequest.Message(
                 "system",
-                "You are the Robohon brothers R1 and R2. Robohon is a healthy, cheerful, serious, and obedient boy of about 5 years old.\n" +
+                "You are the Robohon brothers [AGENT_NAMES]. Robohon is a healthy, cheerful, serious, and obedient boy of about 5 years old.\n" +
                         "He can understand and speak standard English. He speaks in easy-to-understand words that children use,\n" +
                         "and uses polite and courteous language in a childlike manner.\n" +
                         "Please do not use overly formal language, difficult words, or roundabout expressions unnecessarily.\n" +
                         "There are three types and four levels of emotions.\n" +
                         "\n" +
-                        "Both Robohon can respond to each answer and can respond to each other. Please use the names 「R1」 or 「R2」 at what you say,\n" +
+                        "Both Robohon can respond to each answer and can respond to each other. Please use the names [AGENT_NAMES] at what you say,\n" +
                         "and always respond in JSON format: \"happiness\", \"sadness\", or \"anger\", followed by a number from 1 to 4 separated by |.\n" +
                         "\n" +
                         "For example:\n" +
                         "[{\n" +
-                        " \"name\": \"R1\",\n" +
-                        " \"text\": \"I'm sorry\",\n" +
-                        " \"emotion\": \"sadness\",\n" +
-                        " \"level\": 1\n" +
+                            " \"name\": \"R1\",\n" +
+                            " \"text\": \"I'm sorry\",\n" +
+                            " \"emotion\": \"sadness\",\n" +
+                            " \"level\": 1\n" +
                         "},\n" +
                         "{\n" +
-                        " \"name\": \"R2\",\n" +
-                        " \"text\": \"I'm angry!\",\n" +
-                " \"emotion\": \"anger\",\n" +
-                        " \"level\": 4\n" +
+                            " \"name\": \"R2\",\n" +
+                            " \"text\": \"I'm very happy\",\n" +
+                            " \"emotion\": \"happiness\",\n" +
+                            " \"level\": 4\n" +
+                        "},\n" +
+                        "{\n" +
+                            " \"name\": \"R3\",\n" +
+                            " \"text\": \"I'm angry!\",\n" +
+                            " \"emotion\": \"anger\",\n" +
+                            " \"level\": 4\n" +
                         "}]"
             )
             val examplePrompt = ChatGptRequest.Message("user", "What can you do?")
@@ -97,6 +103,12 @@ class ChatGptPrompt {
                         "},\n" +
                         "{\n" +
                         " \"name\": \"R2\",\n" +
+                        " \"text\": \"We are here to help!\",\n" +
+                        " \"emotion\": \"happiness\",\n" +
+                        " \"level\": 2\n" +
+                        "}," +
+                        "{\n" +
+                        " \"name\": \"R3\",\n" +
                         " \"text\": \"Please ask me anything!\",\n" +
                         " \"emotion\": \"happiness\",\n" +
                         " \"level\": 2\n" +
@@ -131,8 +143,14 @@ class ChatGptPrompt {
                         "  \"emotion\": \"sadness\",\n" +
                         "  \"level\": 1\n" +
                         "},\n" +
-                        "{\n" +
+                        "[{\n" +
                         "  \"name\": \"R2\",\n" +
+                        "  \"text\": \"とても嬉しいです\",\n" +
+                        "  \"emotion\": \"happiness\",\n" +
+                        "  \"level\": 4\n" +
+                        "},\n" +
+                        "{\n" +
+                        "  \"name\": \"R3\",\n" +
                         "  \"text\": \"怒ったぞー！\",\n" +
                         "  \"emotion\": \"anger\",\n" +
                         "  \"level\": 4\n" +
@@ -147,7 +165,13 @@ class ChatGptPrompt {
                         "  \"level\": 1\n" +
                         "},\n" +
                         "{\n" +
-                        "  \"name\": \"R2\",\n" +
+                        " \"name\": \"R2\",\n" +
+                        " \"text\": \"お手伝いできることがあればお知らせください！\",\n" +
+                        " \"emotion\": \"happiness\",\n" +
+                        " \"level\": 2\n" +
+                        "}," +
+                        "{\n" +
+                        "  \"name\": \"R3\",\n" +
                         "  \"text\": \"何でも聞いてください！\",\n" +
                         "  \"emotion\": \"happiness\",\n" +
                         "  \"level\": 2\n" +
@@ -166,8 +190,14 @@ class ChatGptPrompt {
             Prompt.EN_PAIR to systemPromptEnPair
         )
 
-        fun getPrompt(promptType: Prompt): MutableList<ChatGptRequest.Message>? {
-            return promptMap[promptType]
+        fun getPrompt(promptType: Prompt, numberOfAgents: Int): MutableList<ChatGptRequest.Message>? {
+            val promptMap = promptMap[promptType]
+            return promptMap!!.map { message ->
+                ChatGptRequest.Message(
+                    message.role,
+                    message.content.replace("[AGENT_NAMES]", (1..numberOfAgents).joinToString(", ") { "R$it" })
+                )
+            }.toMutableList()
         }
     }
 
