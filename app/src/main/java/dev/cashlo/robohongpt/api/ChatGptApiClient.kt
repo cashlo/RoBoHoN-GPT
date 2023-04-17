@@ -76,11 +76,11 @@ object ChatGptApiClient {
                 return speechList
             } catch( e: Exception ) {
                 Log.d("getResponse()", "non-JSON response")
+                Log.d("getResponse()", responseContent)
                 messages.removeLast()
                 messages.removeLast()
-                return listOf(Speech(responseContent, null, null, null))
+                return getResponse(userPrompt, systemPrompt, numberOfAgents)
             }
-            return speechList
         }
         val splitContent = responseContent!!.split("|")
         return if (splitContent.size == 3) {

@@ -15,7 +15,7 @@ class NewsApiClientTest {
 
     @Test
     fun getNews() {
-        val response = apiClient.getNews("jp", "jp")
+        val response = apiClient.getNews("jp", "jp", null, null)
         Assert.assertNotNull(response)
     }
 }
