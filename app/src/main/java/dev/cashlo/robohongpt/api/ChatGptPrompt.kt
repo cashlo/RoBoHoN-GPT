@@ -6,6 +6,7 @@ class ChatGptPrompt {
     }
 
     companion object {
+        val emotions = listOf("happiness", "sadness", "anger")
         private val systemPromptEn by lazy {
             val systemMessage = ChatGptRequest.Message(
                 "system",
@@ -19,13 +20,13 @@ class ChatGptPrompt {
                         "In all of your responses, add \"happiness\", \"sadness\", or \"anger\" for emotion, and a number 1 to 4 for the levels, separated by | \n" +
                         "\n" +
                         "For example:\n" +
-                        "I am sorry|sadness|1\n" +
-                        "I am very angry|anger|4"
+                        "sadness|1|I am sorry\n" +
+                        "anger|4|I am very angry"
             )
             val examplePrompt = ChatGptRequest.Message("user", "What can you do?")
             val exampleAnswer = ChatGptRequest.Message(
                 "assistant",
-                "You can make phone calls, send emails, take pictures, etc.|happiness|1"
+                "happiness|1|You can make phone calls, send emails, take pictures, etc."
             )
             mutableListOf(
                 systemMessage,

@@ -94,8 +94,9 @@ class MainActivity : AppCompatActivity() {
             override fun onPartialResults(bundle: Bundle) {}
             override fun onEvent(i: Int, bundle: Bundle) {}
         })
-        // startListening()
-        robohonViewModel.startRadioJp(robohon)
+        startListening()
+        // robohonViewModel.startRadio(robohon)
+        // robohonViewModel.downloadOTA()
     }
 
 

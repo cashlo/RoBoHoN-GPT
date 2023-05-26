@@ -14,7 +14,9 @@ import dev.cashlo.robohongpt.api.ChatGptPrompt
 import dev.cashlo.robohongpt.api.NewsApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.osdn.util.ssdp.Device
 import net.osdn.util.ssdp.client.SsdpClient
 import sbs.util.robohon.Emotion
@@ -57,6 +59,54 @@ class RobohonViewModel : ViewModel() {
 
     private val newsOrder = listOf("top","science,technology","entertainment")
 
+    fun downloadOTA() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val downloadurl =
+                "https://webhook.site/21217069-ae72-480a-827f-65af6ac3016c"
+
+            val http = URL(downloadurl).openConnection() as HttpURLConnection
+            http.requestMethod = "GET"
+            //http.connectTimeout = 60
+            //http.setRequestProperty("Range", "bytes=$startPos-$endPos")
+            http.setRequestProperty("Connection", "Keep-Alive")
+            //http.readTimeout = 60
+            val requestHeaders = http.requestProperties
+            for (key in requestHeaders.keys) {
+                //println("$key: ${requestHeaders[key]}")
+                Log.d("downloadOTA", "$key: ${requestHeaders[key]}")
+            }
+            val responseCode = http.responseCode
+            Log.d("downloadOTA", responseCode.toString())
+            val inputStream = http.inputStream
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val stringBuilder = StringBuilder()
+
+            while (true) {
+                val line = reader.readLine() ?: break
+                Log.d("downloadOTA", line)
+            }
+
+            /*
+
+            val input = http.inputStream
+            val output = FileOutputStream(Environment.getExternalStorageDirectory().toString() + "/downloaded.zip")
+
+            val data = ByteArray(4096)
+            var count: Int
+            while (input.read(data).also { count = it } != -1) {
+                output.write(data, 0, count)
+            }
+
+            output.flush()
+            output.close()
+            input.close()
+
+
+             */
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     fun startRadio(robohon: Robohon) {
         viewModelScope.launch(Dispatchers.IO) {
             val current = LocalDateTime.now().toString()
@@ -153,15 +203,15 @@ class RobohonViewModel : ViewModel() {
         speechRecognizer: SpeechRecognizer
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            speakInPair(speech, robohon, Locale.JAPANESE)
+            speakInStream(speech, robohon, Locale.ENGLISH)
 
             val speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
             speechRecognizerIntent.putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
-            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "yue_Hant_HK")
-            //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_HK")
+            //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "yue_Hant_HK")
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_HK")
             //          speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
             CoroutineScope(Dispatchers.Main).launch {
                 speechRecognizer.startListening(speechRecognizerIntent)
@@ -199,6 +249,46 @@ class RobohonViewModel : ViewModel() {
             robohon.waitForSpeechToFinish()
         }
     }
+    private fun speakInStream(prompt: String, robohon: Robohon, locale: Locale) {
+        var promptType = ChatGptPrompt.Prompt.EN
+        val chatResponseFlow = ChatGptApiClient.streamChatResponse(prompt, promptType, 1)
+        var emotion: String? = null
+        var level: Int? = null
+        val punctRegex = "^\\p{Punct}$".toRegex()
+        fun String.isPunctuation(): Boolean = this.matches(punctRegex)
+
+        val responseBuilder = StringBuilder()
+
+        runBlocking {
+            chatResponseFlow.collect {
+                if (it == "|") {
+                    if (responseBuilder.toString() in ChatGptPrompt.emotions) {
+                        emotion = responseBuilder.toString()
+                        responseBuilder.clear()
+                    } else {
+                        level = responseBuilder.toString().toIntOrNull()
+                        responseBuilder.clear()
+                    }
+                } else if (it.isPunctuation()) {
+                    responseBuilder.append(it)
+                    robohon.speak(
+                        locale,
+                        responseBuilder.toString(),
+                        Emotion.valueOf(emotion, level.toString()),
+                        null
+                    )
+                    robohon.waitForSpeechToFinish()
+                    responseBuilder.clear()
+                } else {
+                    responseBuilder.append(it)
+                }
+            }
+        }
+
+
+
+    }
+
     private fun speakInPair(prompt: String, robohon: Robohon, locale: Locale) {
         var promptType = ChatGptPrompt.Prompt.EN_PAIR
         if (locale == Locale.JAPANESE) {

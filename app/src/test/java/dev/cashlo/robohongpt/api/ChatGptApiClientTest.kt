@@ -1,6 +1,9 @@
 package dev.cashlo.robohongpt.api
 
 
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -35,7 +38,15 @@ class ChatGptApiClientTest {
         response!!.forEach {
             assert(it.name!!.isNotEmpty())
         }
+    }
 
+    @Test
+    fun `streamChatResponse should stream the response`() = runBlocking {
+        val prompt = "Hello, how are you?"
+        val chatFlow = apiClient.streamChatResponse(prompt, ChatGptPrompt.Prompt.EN, 1)
+        chatFlow.collect{
+            println(it)
+        }
     }
 
 
