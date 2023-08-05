@@ -41,6 +41,15 @@ class ChatGptApiClientTest {
     }
 
     @Test
+    fun `getResponse should call function`() {
+        val prompt = "Hello, do you know each other's name?"
+        val response = apiClient.getResponse(prompt, ChatGptPrompt.Prompt.EN_PAIR, 1)
+        response!!.forEach {
+            assert(it.name!!.isNotEmpty())
+        }
+    }
+
+    @Test
     fun `streamChatResponse should stream the response`() = runBlocking {
         val prompt = "Hello, how are you?"
         val chatFlow = apiClient.streamChatResponse(prompt, ChatGptPrompt.Prompt.EN, 1)

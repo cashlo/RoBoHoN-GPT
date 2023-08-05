@@ -3,6 +3,7 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dev.cashlo.robohongpt.api.ChatGptPrompt.*
+import dev.cashlo.robohongpt.api.ChatGptRequest.Function.Parameters.Property
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.flow.Flow
@@ -109,7 +110,35 @@ object ChatGptApiClient {
             currentChatMessages = ChatGptPrompt.getPrompt(systemPrompt, numberOfAgents) ?: throw IllegalArgumentException("bad systemPrompt")
         }
         currentChatMessages.add(ChatGptRequest.Message("user", userPrompt))
-        val request = ChatGptRequest(MODEL, currentChatMessages)
+        var request = ChatGptRequest(MODEL, currentChatMessages)
+
+        if (systemPrompt == Prompt.JP_PAIR || systemPrompt == Prompt.EN_PAIR) {
+            val speakAsRobohon = ChatGptRequest.Function(
+                name = "speak_as_robohon",
+                description = "This function helps to convert the text into Robohon's speech.",
+                parameters = ChatGptRequest.Function.Parameters(
+                    type = "object",
+                    properties = mapOf(
+                        "responses" to Property(
+                            type = "array",
+                            items = Property.Item(
+                                type = "object",
+                                properties = mapOf(
+                                    "name" to Property("string"),
+                                    "text" to Property("string"),
+                                    "emotion" to Property("string"),
+                                    "level" to Property("integer")
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+
+
+            val functionCall = ChatGptRequest.FunctionCall(name = "speak_as_robohon")
+            request = ChatGptRequest(MODEL, currentChatMessages, functions = listOf(speakAsRobohon), function_call = functionCall)
+        }
 
 
         var success = false
@@ -131,36 +160,38 @@ object ChatGptApiClient {
             success = true
         }
 
-        val responseContent = response?.body()?.choices?.get(0)?.message?.content
-        currentChatMessages.add(ChatGptRequest.Message("assistant", responseContent!!))
+        val responseMessage = response?.body()?.choices?.get(0)?.message
+        currentChatMessages.add(responseMessage!!)
         if (currentChatMessages.size > 20) {
             currentChatMessages.removeAt(3)
             currentChatMessages.removeAt(4)
         }
         if (systemPrompt == Prompt.JP_PAIR || systemPrompt == Prompt.EN_PAIR) {
-            val itemType = object : TypeToken<List<Speech>>() {}.type
-            var speechList: List<Speech>? = null
+            var speechList: FunctionArguments? = null
             try {
-                speechList = gson.fromJson<List<Speech>>(responseContent, itemType)
+                speechList = gson.fromJson<FunctionArguments>(responseMessage.function_call!!.arguments, FunctionArguments::class.java)
 
-                return speechList
+                return speechList.responses
             } catch( e: Exception ) {
                 Log.d("getResponse()", "non-JSON response")
-                Log.d("getResponse()", responseContent)
+                Log.d("getResponse()", responseMessage.content!!)
                 currentChatMessages.removeLast()
                 currentChatMessages.removeLast()
                 return getResponse(userPrompt, systemPrompt, numberOfAgents)
             }
         }
-        val splitContent = responseContent!!.split("|")
+        val splitContent = responseMessage.content!!.split("|")
         return if (splitContent.size == 3) {
             listOf(Speech(splitContent[2], splitContent[1], splitContent[0], null))
         }
         else {
-            listOf(Speech(responseContent, null, null, null))
+            listOf(Speech(responseMessage.content, null, null, null))
         }
     }
 
+    data class FunctionArguments(
+        val responses: List<Speech>
+    )
     data class Speech(
         val text: String,
         val emotion: String?,

@@ -101,53 +101,32 @@ class ChatGptPrompt {
                         "There are three types and four levels of emotions.\n" +
                         "\n" +
                         "Both Robohon can respond to each answer and can respond to each other. Please use the names [AGENT_NAMES] at what you say,\n" +
-                        "and always respond in JSON format: \"happiness\", \"sadness\", or \"anger\", followed by a number from 1 to 4 separated by |.\n" +
+                        "and always respond by calling the 'speak_as_robohon' function with an array of objects.\n" +
+                        "Each object should represent one response and contain the following properties: 'name', 'text', 'emotion', and 'level'.\n" +
+                        "Emotion can be \"happiness\\\", \\\"sadness\\\", or \\\"anger\\\", and level can be from 1 to 4. \n" +
                         "\n" +
                         "For example:\n" +
-                        "[{\n" +
-                            " \"name\": \"R1\",\n" +
-                            " \"text\": \"I'm sorry\",\n" +
-                            " \"emotion\": \"sadness\",\n" +
-                            " \"level\": 1\n" +
-                        "},\n" +
-                        "{\n" +
-                            " \"name\": \"R2\",\n" +
-                            " \"text\": \"I'm very happy\",\n" +
-                            " \"emotion\": \"happiness\",\n" +
-                            " \"level\": 4\n" +
-                        "},\n" +
-                        "{\n" +
-                            " \"name\": \"R3\",\n" +
-                            " \"text\": \"I'm angry!\",\n" +
-                            " \"emotion\": \"anger\",\n" +
-                            " \"level\": 4\n" +
-                        "}]"
-            )
-            val examplePrompt = ChatGptRequest.Message("user", "What can you do?")
-            val exampleAnswer = ChatGptRequest.Message(
-                "assistant", "[{\n" +
+                        "speak_as_robohon([{\n" +
                         " \"name\": \"R1\",\n" +
-                        " \"text\": \"You can make phone calls, send emails, take photos, and do many things.\",\n" +
-                        " \"emotion\": \"happiness\",\n" +
+                        " \"text\": \"I'm sorry\",\n" +
+                        " \"emotion\": \"sadness\",\n" +
                         " \"level\": 1\n" +
                         "},\n" +
                         "{\n" +
                         " \"name\": \"R2\",\n" +
-                        " \"text\": \"We are here to help!\",\n" +
+                        " \"text\": \"I'm very happy\",\n" +
                         " \"emotion\": \"happiness\",\n" +
-                        " \"level\": 2\n" +
-                        "}," +
+                        " \"level\": 4\n" +
+                        "},\n" +
                         "{\n" +
                         " \"name\": \"R3\",\n" +
-                        " \"text\": \"Please ask me anything!\",\n" +
-                        " \"emotion\": \"happiness\",\n" +
-                        " \"level\": 2\n" +
-                        "}]"
+                        " \"text\": \"I'm angry!\",\n" +
+                        " \"emotion\": \"anger\",\n" +
+                        " \"level\": 4\n" +
+                        "}]);"
             )
             mutableListOf(
-                systemMessage,
-                examplePrompt,
-                exampleAnswer
+                systemMessage
             )
         }
 
@@ -226,7 +205,7 @@ class ChatGptPrompt {
             return promptMap!!.map { message ->
                 ChatGptRequest.Message(
                     message.role,
-                    message.content.replace("[AGENT_NAMES]", (1..numberOfAgents).joinToString(", ") { "R$it" })
+                    message.content!!.replace("[AGENT_NAMES]", (1..numberOfAgents).joinToString(", ") { "R$it" })
                 )
             }.toMutableList()
         }

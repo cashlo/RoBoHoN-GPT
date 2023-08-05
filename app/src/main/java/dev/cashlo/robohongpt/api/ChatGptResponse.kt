@@ -12,14 +12,9 @@ data class ChatGptResponse(
 ) {
     data class Choice(
         val index: Int?,
-        val message: Message?,
+        val message: ChatGptRequest.Message?,
         val finish_reason: String?
-    ) {
-        data class Message(
-            val role: String?,
-            val content: String?
-        )
-    }
+    )
 
     data class Usage(
         val prompt_tokens: Int?,
