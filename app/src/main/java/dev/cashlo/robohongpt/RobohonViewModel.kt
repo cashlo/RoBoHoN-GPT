@@ -203,15 +203,15 @@ class RobohonViewModel : ViewModel() {
         speechRecognizer: SpeechRecognizer
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            speakInStream(speech, robohon, Locale.ENGLISH)
+            speakInStream(speech, robohon, Locale.CHINESE)
 
             val speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
             speechRecognizerIntent.putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
-            //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "yue_Hant_HK")
-            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_HK")
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "yue_Hant_HK")
+            //speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_HK")
             //          speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
             CoroutineScope(Dispatchers.Main).launch {
                 speechRecognizer.startListening(speechRecognizerIntent)
@@ -250,7 +250,7 @@ class RobohonViewModel : ViewModel() {
         }
     }
     private fun speakInStream(prompt: String, robohon: Robohon, locale: Locale) {
-        var promptType = ChatGptPrompt.Prompt.EN
+        var promptType = ChatGptPrompt.Prompt.ZH
         val chatResponseFlow = ChatGptApiClient.streamChatResponse(prompt, promptType, 1)
         var emotion: String? = null
         var level: Int? = null
@@ -280,8 +280,19 @@ class RobohonViewModel : ViewModel() {
                     robohon.waitForSpeechToFinish()
                     responseBuilder.clear()
                 } else {
+                    Log.d("speakInStream", it)
                     responseBuilder.append(it)
                 }
+            }
+            if (responseBuilder.isNotEmpty()) {
+                robohon.speak(
+                    locale,
+                    responseBuilder.toString(),
+                    Emotion.valueOf(emotion, level.toString()),
+                    null
+                )
+                robohon.waitForSpeechToFinish()
+                responseBuilder.clear()
             }
         }
 
